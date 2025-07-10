@@ -1,0 +1,27 @@
+Date,Customer,Product,Category,Quantity,Unit Price,Revenue,Region
+2024-01-15,Acme Corp,Laptop,Electronics,5,999.99,4999.95,North
+2024-01-16,TechStart Inc,Monitor,Electronics,10,299.99,2999.90,South
+2024-01-17,Global Solutions,Keyboard,Electronics,25,49.99,1249.75,East
+2024-01-18,Innovation Ltd,Mouse,Electronics,30,29.99,899.70,West
+2024-01-19,Future Systems,Tablet,Electronics,8,599.99,4799.92,North
+2024-01-20,Digital Dynamics,Smartphone,Electronics,12,899.99,10799.88,South
+2024-01-21,Smart Solutions,Headphones,Electronics,20,199.99,3999.80,East
+2024-01-22,Tech Innovators,Webcam,Electronics,15,79.99,1199.85,West
+2024-01-23,Modern Corp,Printer,Electronics,6,249.99,1499.94,North
+2024-01-24,Advanced Tech,Scanner,Electronics,4,179.99,719.96,South
+2024-01-25,Creative Studio,Graphics Card,Electronics,3,699.99,2099.97,East
+2024-01-26,Data Systems,External Drive,Electronics,18,89.99,1619.82,West
+2024-01-27,Cloud Services,Router,Electronics,22,149.99,3299.78,North
+2024-01-28,Network Plus,Switch,Electronics,8,199.99,1599.92,South
+2024-01-29,Secure Corp,Firewall,Electronics,2,999.99,1999.98,East
+2024-01-30,Mobile Solutions,Phone Case,Accessories,50,19.99,999.50,West
+2024-02-01,Office Pro,Desk Lamp,Office,35,39.99,1399.65,North
+2024-02-02,Work Smart,Office Chair,Office,12,299.99,3599.88,South
+2024-02-03,Productivity Inc,Standing Desk,Office,8,499.99,3999.92,East
+2024-02-04,Business Elite,Conference Phone,Office,5,399.99,1999.95,West
+2024-02-05,Meeting Rooms,Projector,Office,7,599.99,4199.93,North
+2024-02-06,Presentation Pro,Whiteboard,Office,15,129.99,1949.85,South
+2024-02-07,Document Plus,Paper Shredder,Office,9,149.99,1349.91,East
+2024-02-08,File Systems,Filing Cabinet,Office,11,199.99,2199.89,West
+2024-02-09,Supply Chain,Stapler,Office,40,12.99,519.60,North
+2024-02-10,Office Essentials,Calculator,Office,25,24.99,624.75,South 

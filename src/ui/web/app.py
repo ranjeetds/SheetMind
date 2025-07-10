@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 
 import aiofiles
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -67,6 +68,15 @@ def create_app() -> FastAPI:
         title="SheetMind",
         description="AI-powered Excel automation tool",
         version="0.1.0"
+    )
+    
+    # Add CORS middleware to allow Script Lab and other origins
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allow all origins for development
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
     )
     
     # Mount static files

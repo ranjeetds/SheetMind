@@ -92,8 +92,14 @@ class ExcelContextAgent(BaseAgent):
         if not excel_context:
             return {"has_selection": False, "message": "No Excel context available"}
         
+        # Handle the new context structure from Script Lab
         worksheet = excel_context.get("worksheet", {})
         selection = excel_context.get("selection", {})
+        
+        # Fallback for old context structure
+        if not selection and "address" in excel_context:
+            selection = excel_context
+            worksheet = {"name": "Unknown"}
         
         analysis = {
             "has_selection": True,
@@ -108,26 +114,41 @@ class ExcelContextAgent(BaseAgent):
         
         # Analyze selection data
         values = selection.get("values", [])
-        if values and len(values) > 0:
-            analysis["has_data"] = True
-            
-            # Check if first row looks like headers
-            if len(values) > 1:
-                first_row = values[0] if values[0] else []
-                second_row = values[1] if len(values) > 1 and values[1] else []
-                
-                # Simple heuristic: if first row is text and second row has numbers
-                if first_row and second_row:
-                    first_row_text = any(isinstance(cell, str) and cell.strip() for cell in first_row)
-                    second_row_numeric = any(isinstance(cell, (int, float)) for cell in second_row)
-                    analysis["has_headers"] = first_row_text and second_row_numeric
-            
-            # Check if data is primarily numeric
-            flat_values = [cell for row in values for cell in row if cell is not None]
-            numeric_count = sum(1 for cell in flat_values if isinstance(cell, (int, float)))
-            analysis["is_numeric"] = numeric_count > len(flat_values) * 0.5 if flat_values else False
-            analysis["numeric_percentage"] = numeric_count / len(flat_values) if flat_values else 0
+        text = selection.get("text", values)  # Fallback to values if text not available
         
+        if values and len(values) > 0:
+            # Check if we actually have non-empty data
+            flat_values = []
+            for row in values:
+                if isinstance(row, list):
+                    flat_values.extend([cell for cell in row if cell is not None and cell != ''])
+                elif row is not None and row != '':
+                    flat_values.append(row)
+            
+            if flat_values:
+                analysis["has_data"] = True
+                
+                # Check if first row looks like headers
+                if len(values) > 1:
+                    first_row = values[0] if values[0] else []
+                    second_row = values[1] if len(values) > 1 and values[1] else []
+                    
+                    # Simple heuristic: if first row is text and second row has numbers
+                    if first_row and second_row:
+                        first_row_cells = [cell for cell in first_row if cell is not None and cell != '']
+                        second_row_cells = [cell for cell in second_row if cell is not None and cell != '']
+                        
+                        if first_row_cells and second_row_cells:
+                            first_row_text = any(isinstance(cell, str) and cell.strip() for cell in first_row_cells)
+                            second_row_numeric = any(isinstance(cell, (int, float)) for cell in second_row_cells)
+                            analysis["has_headers"] = first_row_text and second_row_numeric
+                
+                # Check if data is primarily numeric
+                numeric_count = sum(1 for cell in flat_values if isinstance(cell, (int, float)))
+                analysis["is_numeric"] = numeric_count > len(flat_values) * 0.5 if flat_values else False
+                analysis["numeric_percentage"] = numeric_count / len(flat_values) if flat_values else 0
+                analysis["total_cells"] = len(flat_values)
+            
         return analysis
     
     async def _get_ai_interpretation_with_context(
@@ -140,13 +161,32 @@ class ExcelContextAgent(BaseAgent):
         """Get AI interpretation with Excel context."""
         system_prompt = self.get_system_prompt()
         
-        context_info = f"""
+        # Build context description based on what we actually have
+        if not context_analysis.get("has_data", False):
+            context_info = f"""
+Current Excel Context:
+- Worksheet: {context_analysis.get('worksheet_name', 'Unknown')}
+- Selection: {context_analysis.get('selection_address', 'None')}
+- Size: {context_analysis.get('row_count', 0)} rows × {context_analysis.get('column_count', 0)} columns
+- Status: ⚪ Empty selection or no data
+
+User query: "{query}"
+
+Since there's no data selected, please:
+1. Ask the user to select some data in Excel first
+2. Explain what they need to do to get meaningful results
+3. Suggest what operations would be helpful once they have data selected
+
+Be helpful and guide them to select data, then try their command again.
+"""
+        else:
+            context_info = f"""
 Current Excel Context:
 - Worksheet: {context_analysis.get('worksheet_name', 'Unknown')}
 - Selection: {context_analysis.get('selection_address', 'None')}
 - Data size: {context_analysis.get('row_count', 0)} rows × {context_analysis.get('column_count', 0)} columns
-- Has data: {context_analysis.get('has_data', False)}
-- Numeric data: {context_analysis.get('is_numeric', False)}
+- Contains data: ✅ Yes ({context_analysis.get('total_cells', 0)} non-empty cells)
+- Numeric data: {context_analysis.get('is_numeric', False)} ({context_analysis.get('numeric_percentage', 0)*100:.0f}% numeric)
 - Has headers: {context_analysis.get('has_headers', False)}
 
 User query: "{query}"
@@ -159,6 +199,7 @@ My initial parsing detected:
 
 Please provide a helpful response about what I can do with the current Excel selection.
 Focus on practical operations that make sense for the current data.
+If you can suggest specific Excel operations, mention them clearly.
 """
         
         return await self.generate_response(context_info, system_prompt)

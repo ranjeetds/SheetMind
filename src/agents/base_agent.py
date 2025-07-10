@@ -2,15 +2,15 @@
 Base agent class for SheetMind.
 
 Provides core functionality for AI-powered agents that can understand
-and execute natural language commands.
+and execute natural language commands using local Ollama models.
 """
 
 import os
+import aiohttp
+import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from openai import AsyncOpenAI
-from anthropic import Anthropic
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,12 +20,12 @@ class BaseAgent(ABC):
     """
     Abstract base class for all SheetMind agents.
     
-    Provides common functionality for AI integration and command processing.
+    Provides common functionality for AI integration using local Ollama models.
     """
     
     def __init__(self, ai_provider: str = None):
         """Initialize the base agent."""
-        self.ai_provider = ai_provider or os.getenv("DEFAULT_AI_PROVIDER", "openai")
+        self.ai_provider = ai_provider or os.getenv("DEFAULT_AI_PROVIDER", "ollama")
         self.conversation_history: List[Dict[str, str]] = []
         
         # Initialize AI clients
@@ -33,14 +33,13 @@ class BaseAgent(ABC):
     
     def _setup_ai_clients(self):
         """Set up AI service clients."""
-        if self.ai_provider == "openai":
-            self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            self.model = os.getenv("OPENAI_MODEL", "gpt-4o")
-        elif self.ai_provider == "anthropic":
-            self.anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-            self.model = os.getenv("ANTHROPIC_MODEL", "claude-3-sonnet-20240229")
+        if self.ai_provider == "ollama":
+            self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+            self.model = os.getenv("OLLAMA_MODEL", "llama2")
         else:
-            raise ValueError(f"Unsupported AI provider: {self.ai_provider}")
+            # Fallback to simple responses if no AI available
+            self.ollama_url = None
+            self.model = None
     
     async def generate_response(self, prompt: str, system_prompt: str = None) -> str:
         """
@@ -54,60 +53,83 @@ class BaseAgent(ABC):
             AI-generated response
         """
         try:
-            if self.ai_provider == "openai":
-                return await self._openai_generate(prompt, system_prompt)
-            elif self.ai_provider == "anthropic":
-                return await self._anthropic_generate(prompt, system_prompt)
+            if self.ai_provider == "ollama":
+                return await self._ollama_generate(prompt, system_prompt)
+            else:
+                return await self._fallback_response(prompt)
         except Exception as e:
-            raise Exception(f"AI generation failed: {e}")
+            return f"AI service unavailable: {e}. Using basic command processing."
     
-    async def _openai_generate(self, prompt: str, system_prompt: str = None) -> str:
-        """Generate response using OpenAI."""
-        messages = []
+    async def _ollama_generate(self, prompt: str, system_prompt: str = None) -> str:
+        """Generate response using Ollama."""
+        if not self.ollama_url:
+            return await self._fallback_response(prompt)
         
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        
-        # Add conversation history
-        messages.extend(self.conversation_history[-10:])  # Keep last 10 messages
-        
-        # Add current prompt
-        messages.append({"role": "user", "content": prompt})
-        
-        response = await self.openai_client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=0.1,
-            max_tokens=2000
-        )
-        
-        return response.choices[0].message.content
+        try:
+            # Build context from conversation history and system prompt
+            context = ""
+            if system_prompt:
+                context += f"System: {system_prompt}\n\n"
+            
+            # Add recent conversation history
+            for msg in self.conversation_history[-5:]:  # Keep last 5 messages
+                context += f"{msg['role'].capitalize()}: {msg['content']}\n"
+            
+            # Add current prompt
+            full_prompt = f"{context}User: {prompt}\nAssistant:"
+            
+            # Call Ollama API
+            async with aiohttp.ClientSession() as session:
+                payload = {
+                    "model": self.model,
+                    "prompt": full_prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.2,
+                        "top_p": 0.9,
+                        "max_tokens": 1000
+                    }
+                }
+                
+                async with session.post(f"{self.ollama_url}/api/generate", json=payload) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return result.get("response", "").strip()
+                    else:
+                        return await self._fallback_response(prompt)
+                        
+        except Exception as e:
+            return await self._fallback_response(prompt)
     
-    async def _anthropic_generate(self, prompt: str, system_prompt: str = None) -> str:
-        """Generate response using Anthropic."""
-        # Build context from conversation history
-        context = ""
-        for msg in self.conversation_history[-10:]:
-            context += f"{msg['role']}: {msg['content']}\n"
+    async def _fallback_response(self, prompt: str) -> str:
+        """Provide fallback responses when AI is not available."""
+        prompt_lower = prompt.lower()
         
-        full_prompt = f"{system_prompt}\n\n{context}\nuser: {prompt}\nassistant:"
-        
-        response = await self.anthropic_client.completions.create(
-            model=self.model,
-            prompt=full_prompt,
-            max_tokens_to_sample=2000,
-            temperature=0.1
-        )
-        
-        return response.completion
+        # Simple pattern matching for common Excel operations
+        if "sum" in prompt_lower:
+            return "I can help you sum data. Select the range you want to sum and I'll add the SUM formula."
+        elif "chart" in prompt_lower:
+            return "I can create charts from your data. Select the data range and I'll create a chart for you."
+        elif "format" in prompt_lower and "currency" in prompt_lower:
+            return "I can format cells as currency. Select the cells and I'll apply currency formatting."
+        elif "bold" in prompt_lower:
+            return "I can make text bold. Select the cells and I'll apply bold formatting."
+        elif "clear" in prompt_lower:
+            return "I can clear cell contents. Select the cells you want to clear."
+        elif "table" in prompt_lower:
+            return "I can create formatted tables. Select your data range and I'll convert it to a table."
+        elif "analyze" in prompt_lower:
+            return "I can analyze your data. Select the range and I'll provide basic statistics."
+        else:
+            return f"I understand you want to: {prompt}. Available commands: sum, chart, format currency, bold, clear, table, analyze"
     
     def add_to_conversation(self, role: str, content: str):
         """Add a message to the conversation history."""
         self.conversation_history.append({"role": role, "content": content})
         
         # Keep conversation history manageable
-        if len(self.conversation_history) > 20:
-            self.conversation_history = self.conversation_history[-20:]
+        if len(self.conversation_history) > 10:
+            self.conversation_history = self.conversation_history[-10:]
     
     @abstractmethod
     async def process_query(self, query: str) -> str:
@@ -153,5 +175,6 @@ Guidelines:
 3. If you need clarification, ask specific questions
 4. Focus on practical Excel solutions
 5. Be concise but thorough in explanations
+6. You are running locally via Ollama for privacy and speed
 
 Respond in a helpful, professional manner while being conversational.""" 

@@ -1,111 +1,187 @@
-# SheetMind 🧠📊
+# 🧠 SheetMind AI - Excel's Cursor-like AI Assistant
 
-> An open-source Cursor-like tool for Excel that lets natural language agents execute commands on your spreadsheets.
+A **local AI-powered Excel automation tool** that brings Cursor-like intelligence directly to Excel using **Ollama** for privacy and performance.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+![SheetMind AI](https://img.shields.io/badge/Excel-AI%20Assistant-blue) ![Local AI](https://img.shields.io/badge/Ollama-Local%20AI-green) ![Privacy](https://img.shields.io/badge/Privacy-First-orange)
 
-## 🚀 What is SheetMind?
+## ✨ What Is SheetMind?
 
-SheetMind brings the power of AI-driven natural language processing to Excel, allowing you to:
+SheetMind transforms Excel into an **AI-powered workspace** where you can:
+- 🗣️ **Talk to your data** in natural language
+- 🤖 **Automate complex tasks** with simple commands  
+- 📊 **Analyze data instantly** using local AI
+- 🔒 **Keep everything private** - no data leaves your machine
+- ⚡ **Work efficiently** with Cursor-like AI assistance
 
-- **Talk to your spreadsheets**: Use natural language to manipulate data, create formulas, and generate insights
-- **Automate complex tasks**: Let AI agents handle repetitive Excel operations
-- **Smart data analysis**: Get intelligent suggestions and automated data processing
-- **Cross-platform compatibility**: Works with Excel on Windows, macOS, and web-based Excel
+## 🚀 Quick Start (3 Minutes)
 
-## ✨ Features
-
-- 🗣️ **Natural Language Interface**: "Add a column for profit margins" → Automatically creates formulas
-- 🤖 **Intelligent Agents**: AI-powered agents that understand Excel operations
-- 🔧 **Excel Integration**: Seamless integration with local Excel installations and web Excel
-- 📊 **Smart Analysis**: Automated data insights and visualization suggestions
-- 🌐 **Web Interface**: Clean, modern web UI for easy interaction
-- 🔓 **Open Source**: MIT licensed, community-driven development
-
-## 🛠️ Installation
-
-### Prerequisites
-
-- Python 3.8 or higher
-- Excel (local installation or Office 365 access)
-- API key for OpenAI or similar LLM service
-
-### Quick Start
-
+### 1. Install Ollama (Local AI)
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/sheetmind.git
-cd sheetmind
+# macOS/Linux
+curl -fsSL https://ollama.ai/install.sh | sh
+ollama pull llama2
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# Run SheetMind
-python src/main.py
+# Windows: Download from https://ollama.ai
 ```
 
-## 🎯 Usage Examples
-
-### Basic Commands
-
-```
-"Create a pivot table from the sales data"
-"Add a formula to calculate 20% tax on column C"
-"Sort the data by date in descending order"
-"Find all rows where revenue is greater than $10,000"
-"Create a chart showing monthly trends"
+### 2. Start SheetMind
+```bash
+# Clone and start
+git clone <this-repo>
+cd ExcelCursor
+./start-sheetmind.sh    # Mac/Linux
+# OR
+start-sheetmind.bat     # Windows
 ```
 
-### Advanced Operations
+### 3. Install in Excel
+1. Open Excel → **Insert** → **Get Add-ins** 
+2. Search "**Script Lab**" → Install
+3. Script Lab → **Import** → `excel-addin/script-lab-proper.js`
+4. Click **Run** → 🎉 **SheetMind AI is ready!**
 
-```
-"Analyze the correlation between marketing spend and sales"
-"Generate a summary report of Q4 performance"
-"Clean the data by removing duplicates and fixing formatting"
-"Create a dashboard with key metrics"
-```
+## 💬 Example Commands
+
+**Basic Operations:**
+- "Sum column A"
+- "Format as currency"
+- "Create a chart from this data"
+- "Make headers bold"
+
+**AI-Powered Analysis:**
+- "What insights can you find in this data?"
+- "Create a summary table of sales by region"
+- "Find outliers and highlight them"
+- "Format this as a professional report"
+
+**Advanced Automation:**
+- "Calculate quarterly growth rates"
+- "Generate pivot table for expense analysis"
+- "Find duplicate entries and mark them"
 
 ## 🏗️ Architecture
 
 ```
-SheetMind/
-├── src/
-│   ├── agents/          # AI agent implementations
-│   ├── integrations/    # Excel integration layers
-│   ├── nlp/            # Natural language processing
-│   ├── ui/             # User interfaces
-│   └── main.py         # Application entry point
-├── tests/              # Test suites
-└── docs/               # Documentation
+Excel (Script Lab) ↔ FastAPI Backend ↔ Ollama AI
+     Office.js      localhost:8000     Local LLM
 ```
 
-## 🤝 Contributing
+**Why This Approach Works:**
+- ✅ **No Upload Issues**: Uses Microsoft's trusted Script Lab
+- ✅ **Full Excel Access**: Office.js provides complete Excel API
+- ✅ **Local AI**: Ollama keeps data private and responses fast
+- ✅ **Graceful Fallback**: Works even when AI is unavailable
+- ✅ **Cursor-like UI**: Professional, familiar interface
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+## 📁 Project Structure
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```
+ExcelCursor/
+├── 🧠 excel-addin/
+│   ├── script-lab-proper.js      # Working Script Lab code
+│   └── SCRIPT-LAB-FINAL.md       # Complete setup guide
+├── ⚙️ src/
+│   ├── agents/
+│   │   ├── base_agent.py         # Ollama integration
+│   │   └── excel_context_agent.py
+│   └── ui/web/app.py             # FastAPI backend
+├── 🚀 start-sheetmind.sh         # Mac/Linux startup
+├── 🚀 start-sheetmind.bat        # Windows startup
+└── 📋 requirements.txt           # Python dependencies
+```
+
+## 🔧 Configuration
+
+Create a `.env` file to customize:
+```bash
+DEFAULT_AI_PROVIDER=ollama
+OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=llama2              # or codellama, mistral, llama2:13b
+```
+
+**Model Recommendations:**
+- `llama2` (3.8GB) - Fast, good for basic tasks
+- `codellama` (3.8GB) - Best for Excel formulas and analysis  
+- `llama2:13b` (7.4GB) - More capable reasoning
+- `mistral` (4.1GB) - Good balance of speed and capability
+
+## 🎯 Features
+
+### ✅ Working Now
+- Direct Excel manipulation via Office.js
+- Real-time context awareness (knows your selection)
+- Natural language command processing
+- Local AI with Ollama integration
+- Fallback to basic commands when AI unavailable
+- Professional Cursor-like interface
+- Quick action buttons for common tasks
+- Conversation history and error handling
+
+### 🚀 Capabilities
+- **Data Analysis**: Instant insights and statistics
+- **Chart Creation**: Automatic visualization
+- **Formatting**: Professional styling and layouts
+- **Formula Generation**: Complex Excel formulas
+- **Data Cleaning**: Find and fix issues
+- **Automation**: Multi-step operations
+- **Context Awareness**: Understands your current selection
+
+## 🛠️ Development
+
+### Backend Development
+```bash
+# Edit files in src/ and restart
+uvicorn src.ui.web.app:app --reload
+```
+
+### Frontend Development  
+```bash
+# Edit excel-addin/script-lab-proper.js
+# Re-run in Script Lab to see changes
+```
+
+### Add New AI Models
+```bash
+ollama pull <model-name>
+# Update OLLAMA_MODEL in .env
+```
+
+## 🔍 Troubleshooting
+
+**AI Not Working?**
+```bash
+# Check Ollama
+ollama list
+ollama serve
+
+# Check backend
+curl http://localhost:8000/capabilities
+```
+
+**Excel Issues?**
+1. Ensure latest Excel version
+2. Check Script Lab is installed and updated
+3. Verify internet connection (for Script Lab itself)
+4. Try re-importing the script file
+
+## 🎊 Why SheetMind?
+
+1. **Privacy First**: Everything runs locally via Ollama
+2. **No Upload Issues**: Uses Microsoft's trusted Script Lab
+3. **Full Integration**: Complete Excel API access via Office.js
+4. **AI-Powered**: Understands context and generates smart operations
+5. **Cursor-like UX**: Familiar, professional interface
+6. **Easy Setup**: Works in 3 minutes with simple scripts
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Open source project - see LICENSE file for details.
 
-## 🙏 Acknowledgments
+## 🤝 Contributing
 
-- Inspired by Cursor and other AI-powered development tools
-- Built with love for the Excel community
-- Special thanks to all contributors
+Contributions welcome! This project aims to democratize AI-powered Excel automation.
 
-## 🔗 Links
+---
 
-- [Documentation](https://sheetmind.readthedocs.io)
-- [Issues](https://github.com/yourusername/sheetmind/issues)
-- [Discussions](https://github.com/yourusername/sheetmind/discussions) 
+**Transform your Excel workflow with the power of local AI.** 
+**No cloud required. No data shared. Just intelligent automation.** 🚀 
